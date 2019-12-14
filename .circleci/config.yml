@@ -19,6 +19,33 @@ jobs:
       - run:
           name: Run unittest
           command: python fizzbuzztest.py
+  build_image:
+    working_directory: ~/sayfizz
+    docker:
+      - image: circleci/python:3.6.1
+    steps:
+      - setup_remote_docker
+      - attach_workspace:
+          at: .
+      - run: |
+          docker build -t prontoshine/sayfizz:latest .
+          docker login -u prontoshine -p $DOCKER_PASS
+          docker push prontoshine/sayfizz:latest
+  deploy:
+    working_directory: ~/sayfizz
+    docker:
+      - image: circleci/python:3.6.1
+    steps:
+      - setup_remote_docker
+      - attach_workspace:
+          at: .
+      - run:
+        name: install ansible
+        command: |
+        cd ansible & pipenv install ansible
+        pipenv shell
+        ansible-playbook -i hosts production.yml --private-key=~/.ssh/awskey.pem --extra-vars "path=/Users/shine/Documents/pronto-playground/anotherfizz"
+
 workflows:
   version: 2
   say-fizz-pipeline:
